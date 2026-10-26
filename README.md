@@ -26,13 +26,13 @@ Sistem pencatatan finansial dan tabungan otomatis berbasis AI Vision yang memban
 ## Fitur Utama
 
 ### Smart Receipt Scanner
-Mengubah foto struk belanja menjadi data transaksi secara otomatis menggunakan teknologi OCR dan AI. 【1-445546】
+Mengubah foto struk belanja menjadi data transaksi secara otomatis menggunakan teknologi OCR dan AI.
 
 ### Budget Overspend Alert
-Memberikan notifikasi ketika pengeluaran melebihi batas anggaran yang telah ditentukan. 【1-445546】
+Memberikan notifikasi ketika pengeluaran melebihi batas anggaran yang telah ditentukan.
 
 ### Savings Goal Planning
-Membantu pengguna merencanakan target tabungan dan menghitung kebutuhan tabungan bulanan. 【1-445546】
+Membantu pengguna merencanakan target tabungan dan menghitung kebutuhan tabungan bulanan.
 
 ### Financial Dashboard
 Menyajikan ringkasan pemasukan, pengeluaran, dan progres tabungan dalam bentuk visual yang mudah dipahami.
