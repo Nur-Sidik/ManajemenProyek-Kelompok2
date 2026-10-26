@@ -6,13 +6,13 @@ Sistem pencatatan finansial dan tabungan otomatis berbasis AI Vision.
 
 ### Project Manager
 - Nur Sidik Zainu Ahmad
-- Afdan Aiman Saputra
 
 ### UI/UX Designer
 - Abdullah Duwi Putro
 
 ### Frontend Developer
 - Syah Jehan Wonopatih
+- Afdan Aiman Saputra
 
 ### Backend Developer
 - M. Indra Ardian
