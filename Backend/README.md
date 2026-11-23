@@ -13,10 +13,10 @@ cd Backend
 npm install
 cp .env.example .env     # Windows PowerShell: Copy-Item .env.example .env
 npm run dev              # http://localhost:4000
-npm test                 # 11 tes otomatis (database sementara di memori)
+npm test                 # tes otomatis (database sementara di memori)
 ```
 
-Tabel dibuat otomatis saat server pertama kali berjalan. File database ada di `Backend/data/` (tidak ikut Git).
+Tabel dibuat otomatis saat server pertama kali berjalan (migrasi `Database/migrations/*.sql`, termasuk `002_frontend_web.sql` untuk frontend versi web). File database ada di `Backend/data/` (tidak ikut Git).
 Jalankan frontend di terminal lain (`cd Frontend && npm run dev`); permintaan `/api` otomatis diteruskan ke port 4000.
 
 Perintah lain: `npm run db:migrate` (hanya migrasi) dan `npm run db:seed -- email@contoh.com` (isi ulang data contoh satu akun).
@@ -36,44 +36,44 @@ Perintah lain: `npm run db:migrate` (hanya migrasi) dan `npm run db:seed -- emai
 |---|---|---|
 | POST | `/api/auth/register` | Daftar `{name, email, password}` -> `{token, user}` |
 | POST | `/api/auth/login` | Masuk `{email, password}` -> `{token, user}` |
+| POST | `/api/auth/forgot-password` | Lupa kata sandi `{email}` -> 202 (jawaban seragam; belum mengirim email) |
 | GET | `/api/auth/me` | Data akun yang sedang masuk |
-| GET | `/api/summary` | Pemasukan & pengeluaran bulan ini, saldo |
-| GET | `/api/transactions?limit=` | Daftar transaksi terbaru |
-| POST | `/api/transactions` | Catat `{title, amount, category, type?, date?, source?}` -> `{transaction, budget}` |
-| GET | `/api/budgets` | Anggaran + terpakai bulan ini |
+| GET | `/api/users/me` | Profil lengkap + preferensi |
+| PUT | `/api/users/me` | Ubah profil `{name, email, phone?, language?, currency?, budgetPeriod?, notifBudget?, notifGoal?, notifWeekly?}` |
+| PUT | `/api/users/me/password` | Ganti kata sandi `{currentPassword, newPassword}` |
+| GET | `/api/summary?month=YYYY-MM` | Pemasukan & pengeluaran bulan itu (default bulan ini), saldo |
+| GET | `/api/transactions?limit=&category=&from=&to=` | Daftar transaksi terbaru |
+| POST | `/api/transactions` | Catat `{title, amount, category?, type?, date?, source?, note?}` -> `{transaction, budget}` |
+| GET | `/api/budgets?month=YYYY-MM` | Anggaran + terpakai di bulan itu (default bulan ini) |
 | PUT | `/api/budgets/:category` | Atur `{limit, alertAt}` |
-| GET | `/api/goals` | Daftar target + riwayat setoran |
-| POST | `/api/goals` | Buat `{name, target, months}` |
+| DELETE | `/api/budgets/:category` | Hapus anggaran kategori |
+| GET | `/api/goals?status=active` atau `inactive` | Daftar target + riwayat setoran |
+| POST | `/api/goals` | Buat `{name, target, months?, initialAmount?}` (`months` kosong = fleksibel) |
 | GET | `/api/goals/:id` | Detail target |
-| POST | `/api/goals/:id/deposits` | Setor `{amount}` |
+| PUT | `/api/goals/:id` | Ubah `{name, target, months?}` (setoran tidak berubah) |
+| PATCH | `/api/goals/:id/status` | Aktif / nonaktifkan `{status: "active"}` atau `"inactive"` |
+| POST | `/api/goals/:id/deposits` | Setor `{amount, date?, note?}` |
 | GET | `/api/notifications` | Daftar notifikasi |
 | POST | `/api/notifications/:id/read` | Tandai dibaca (`/read-all` untuk semua) |
-| GET | `/api/report?range=week\|month\|year` | Data grafik + porsi per kategori |
+| GET | `/api/report?range=week`, `month`, atau `year` | Data grafik + porsi per kategori + rentang tanggal |
 | POST | `/api/scan` | Unggah foto struk (form field `receipt`) -> hasil OCR |
 | POST | `/api/demo/reset` | Kembalikan data contoh akun ini |
 
-Kategori: `Makanan`, `Transport`, `Hiburan`, `Lainnya` (pemasukan otomatis `Pemasukan`).
+Kategori pengeluaran: `Makanan`, `Transport`, `Hiburan`, `Belanja`, `Tagihan`, `Kesehatan`, `Pendidikan`, `Lainnya`.
+Kategori pemasukan: `Uang Saku`, `Gaji`, `Bonus`, `Hadiah`, `Lainnya` (kalau kosong otomatis `Pemasukan`).
 
-## Menyambungkan layanan OCR (untuk AI Developer)
+## OCR struk dengan Gemini
 
-Saat ini `OCR_MODE=mock` mengembalikan hasil contoh. Untuk memakai layanan di `ocr/ai-service`, atur
-`OCR_MODE=service` dan `OCR_SERVICE_URL`. Backend akan mengirim `POST multipart/form-data` dengan field `file` (foto struk).
-Layanan harus membalas JSON:
+`OCR_MODE=mock` mengembalikan hasil contoh. Untuk memakai Gemini, atur variabel berikut di `.env` backend:
 
-```json
-{
-  "store": "Indomaret Kaliurang",
-  "date": "2026-11-22",
-  "category": "Makanan",
-  "accuracy": 96,
-  "items": [{ "name": "Susu UHT 1L", "price": 18000 }],
-  "total": 52000
-}
+```env
+OCR_MODE=service
+GEMINI_API_KEY=isi_api_key_gemini
+GEMINI_MODEL=gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-2.5-flash
+MAX_UPLOAD_MB=8
 ```
 
-Hanya `store` yang wajib. `total` boleh dikosongkan (dijumlah dari `items`), `category` bernilai salah satu dari empat kategori
-(default `Lainnya`). Balas status **422** kalau struk tidak terbaca; backend meneruskannya sebagai `UNREADABLE`
-sehingga frontend menampilkan layar "Struk Tidak Terbaca". Status lain yang bukan 2xx dianggap layanan tidak tersedia (502).
+`GEMINI_MODEL` menerima daftar model dipisahkan koma dan dicoba berurutan. Jika model kena rate limit, kapasitas penuh, atau ID model tidak tersedia, backend mencoba model berikutnya. Gunakan ID model Gemini yang valid. Backend mengirim gambar struk yang sudah diperkecil langsung ke Gemini API. API key hanya dibaca dari environment backend dan tidak dikirim ke frontend. Model mengembalikan nama merchant, nominal, kategori, dan tanggal dalam JSON.
 
 ## Sebelum production
 

@@ -1,52 +1,52 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { DatabaseSync } from 'node:sqlite' // SQLite bawaan Node.js (>= 22.13), tanpa paket native
+import mysql from 'mysql2/promise'
 import { config } from '../config.js'
 
-let db
+let pool
 
 export function getDb() {
-  if (db) return db
-  if (config.dbPath !== ':memory:') fs.mkdirSync(path.dirname(config.dbPath), { recursive: true })
-  db = new DatabaseSync(config.dbPath)
-  db.exec('PRAGMA journal_mode = WAL')
-  db.exec('PRAGMA foreign_keys = ON')
-  // Pembungkus transaksi: fn dijalankan atomik (batal semua kalau ada error).
-  db.transaction = (fn) => (...args) => {
-    db.exec('BEGIN IMMEDIATE')
-    try {
-      const r = fn(...args)
-      db.exec('COMMIT')
-      return r
-    } catch (e) {
-      db.exec('ROLLBACK')
-      throw e
-    }
+  if (!pool) {
+    pool = mysql.createPool({
+      host: config.db.host,
+      port: config.db.port,
+      user: config.db.user,
+      password: config.db.password,
+      database: config.db.database,
+      waitForConnections: true,
+      connectionLimit: 10,
+      namedPlaceholders: false,
+    })
   }
-  migrate(db)
-  return db
+  return pool
 }
 
-export function closeDb() {
-  db?.close()
-  db = undefined
+export async function query(sql, params = []) {
+  const [rows] = await getDb().execute(sql, params)
+  return rows
 }
 
-// Menjalankan file .sql di Database/migrations secara berurutan, satu kali per file.
-export function migrate(d = getDb()) {
-  d.exec('CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL)')
-  if (!fs.existsSync(config.migrationsDir)) {
-    throw new Error(`Folder migrasi tidak ditemukan: ${config.migrationsDir}`)
+export async function queryOne(sql, params = []) {
+  const rows = await query(sql, params)
+  return rows[0] ?? null
+}
+
+export async function withTransaction(fn) {
+  const conn = await getDb().getConnection()
+  await conn.beginTransaction()
+  try {
+    const result = await fn(conn)
+    await conn.commit()
+    return result
+  } catch (err) {
+    await conn.rollback()
+    throw err
+  } finally {
+    conn.release()
   }
-  const files = fs.readdirSync(config.migrationsDir).filter((f) => f.endsWith('.sql')).sort()
-  const done = new Set(d.prepare('SELECT name FROM schema_migrations').all().map((r) => r.name))
-  for (const f of files) {
-    if (done.has(f)) continue
-    const sql = fs.readFileSync(path.join(config.migrationsDir, f), 'utf8')
-    d.transaction(() => {
-      d.exec(sql)
-      d.prepare('INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)').run(f, new Date().toISOString())
-    })()
-    console.log(`migrasi dijalankan: ${f}`)
+}
+
+export async function closeDb() {
+  if (pool) {
+    await pool.end()
+    pool = undefined
   }
 }

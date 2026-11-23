@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { ZodError } from 'zod'
 import { config } from './config.js'
-import { getDb } from './db/index.js'
+import { queryOne } from './db/index.js'
 
 export class HttpError extends Error {
   constructor(status, code, message, fields) {
@@ -27,13 +27,13 @@ export function signToken(userId) {
   return jwt.sign({ sub: userId }, config.jwtSecret, { expiresIn: config.jwtExpires })
 }
 
-export function requireAuth(req, _res, next) {
+export async function requireAuth(req, _res, next) {
   const h = req.headers.authorization || ''
   const token = h.startsWith('Bearer ') ? h.slice(7) : null
   if (!token) return next(new HttpError(401, 'UNAUTHORIZED', 'Silakan masuk terlebih dahulu.'))
   try {
     const { sub } = jwt.verify(token, config.jwtSecret)
-    const user = getDb().prepare('SELECT id, name, email FROM users WHERE id = ?').get(sub)
+    const user = await queryOne('SELECT id, name, email FROM users WHERE id = ?', [sub])
     if (!user) throw new Error('user hilang')
     req.user = user
     next()

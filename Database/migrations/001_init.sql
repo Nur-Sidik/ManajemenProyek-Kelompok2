@@ -1,65 +1,82 @@
--- SaveSmart AI - skema awal (SQLite)
--- Nominal uang disimpan sebagai bilangan bulat dalam Rupiah.
--- Tanggal disimpan sebagai teks ISO (YYYY-MM-DD untuk tanggal, ISO 8601 untuk waktu).
+-- SaveSmart AI - Skema Database MySQL (Laragon)
+-- dicopy terus di jalankan di laragon
+CREATE DATABASE IF NOT EXISTS savesmart_ai CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE savesmart_ai;
 
-CREATE TABLE users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  name          TEXT    NOT NULL,
-  email         TEXT    NOT NULL UNIQUE,
-  password_hash TEXT    NOT NULL,
-  created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
+CREATE TABLE IF NOT EXISTS users (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(100) NOT NULL,
+  email         VARCHAR(150) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  phone         VARCHAR(30)  NOT NULL DEFAULT '',
+  language      VARCHAR(10)  NOT NULL DEFAULT 'id',
+  currency      VARCHAR(10)  NOT NULL DEFAULT 'IDR',
+  budget_period VARCHAR(20)  NOT NULL DEFAULT 'monthly',
+  notif_budget  TINYINT(1)   NOT NULL DEFAULT 1,
+  notif_goal    TINYINT(1)   NOT NULL DEFAULT 1,
+  notif_weekly  TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE transactions (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  title      TEXT    NOT NULL,
-  category   TEXT    NOT NULL CHECK (category IN ('Makanan','Transport','Hiburan','Lainnya','Pemasukan')),
-  amount     INTEGER NOT NULL CHECK (amount > 0),
-  type       TEXT    NOT NULL CHECK (type IN ('expense','income')),
-  date       TEXT    NOT NULL,                       -- YYYY-MM-DD
-  source     TEXT    NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','scan')),
-  created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
-CREATE INDEX idx_tx_user_date ON transactions(user_id, date DESC, id DESC);
+CREATE TABLE IF NOT EXISTS transactions (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT          NOT NULL,
+  title      VARCHAR(150) NOT NULL,
+  category   VARCHAR(50)  NOT NULL,
+  amount     BIGINT       NOT NULL,
+  type       ENUM('expense','income') NOT NULL,
+  date       VARCHAR(10)  NOT NULL,
+  source     ENUM('manual','scan') NOT NULL DEFAULT 'manual',
+  note       VARCHAR(255) NOT NULL DEFAULT '',
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_tx_user_date (user_id, date DESC, id DESC),
+  CONSTRAINT fk_tx_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE budgets (
-  user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  category     TEXT    NOT NULL CHECK (category IN ('Makanan','Transport','Hiburan','Lainnya')),
-  limit_amount INTEGER NOT NULL CHECK (limit_amount > 0),
-  alert_at     INTEGER NOT NULL DEFAULT 90 CHECK (alert_at BETWEEN 50 AND 99),
-  PRIMARY KEY (user_id, category)
-);
+CREATE TABLE IF NOT EXISTS budgets (
+  user_id      INT         NOT NULL,
+  category     VARCHAR(50) NOT NULL,
+  limit_amount BIGINT      NOT NULL,
+  alert_at     INT         NOT NULL DEFAULT 90,
+  PRIMARY KEY (user_id, category),
+  CONSTRAINT fk_budgets_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE goals (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name          TEXT    NOT NULL,
-  target_amount INTEGER NOT NULL CHECK (target_amount > 0),
-  deadline      TEXT,                                -- YYYY-MM-DD, boleh kosong
-  created_at    TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
-CREATE INDEX idx_goals_user ON goals(user_id);
+CREATE TABLE IF NOT EXISTS goals (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT          NOT NULL,
+  name          VARCHAR(100) NOT NULL,
+  target_amount BIGINT       NOT NULL,
+  deadline      VARCHAR(10)  NULL,
+  status        ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  months        INT          NULL,
+  created_at    TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_goals_user (user_id),
+  CONSTRAINT fk_goals_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE deposits (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  goal_id    INTEGER NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
-  amount     INTEGER NOT NULL CHECK (amount > 0),
-  date       TEXT    NOT NULL,                       -- YYYY-MM-DD
-  created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
-);
-CREATE INDEX idx_deposits_goal ON deposits(goal_id, date DESC, id DESC);
+CREATE TABLE IF NOT EXISTS deposits (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  goal_id    INT          NOT NULL,
+  amount     BIGINT       NOT NULL,
+  date       VARCHAR(10)  NOT NULL,
+  note       VARCHAR(255) NOT NULL DEFAULT '',
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_deposits_goal (goal_id, date DESC, id DESC),
+  CONSTRAINT fk_deposits_goal FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE notifications (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  kind       TEXT    NOT NULL CHECK (kind IN ('budget','receipt','goal')),
-  title      TEXT    NOT NULL,
-  body       TEXT    NOT NULL,
-  link       TEXT    NOT NULL,                       -- rute frontend tujuan
-  dedupe_key TEXT,                                   -- mencegah notifikasi ganda
-  is_read    INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  UNIQUE (user_id, dedupe_key)
-);
-CREATE INDEX idx_notif_user ON notifications(user_id, id DESC);
+CREATE TABLE IF NOT EXISTS notifications (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT          NOT NULL,
+  kind       ENUM('budget','receipt','goal') NOT NULL,
+  title      VARCHAR(150) NOT NULL,
+  body       TEXT         NOT NULL,
+  link       VARCHAR(150) NOT NULL,
+  dedupe_key VARCHAR(150) NULL,
+  is_read    TINYINT(1)   NOT NULL DEFAULT 0,
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_notif_dedupe (user_id, dedupe_key),
+  INDEX idx_notif_user (user_id, id DESC),
+  CONSTRAINT fk_notif_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
