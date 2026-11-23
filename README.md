@@ -41,7 +41,7 @@ Menyajikan ringkasan pemasukan, pengeluaran, dan progres tabungan dalam bentuk v
 
 ## Teknologi
 
-- Next.js
+- Vite
 - React
 - Node.js
 - PostgreSQL
