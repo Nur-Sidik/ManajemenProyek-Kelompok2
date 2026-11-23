@@ -28,9 +28,9 @@ export const config = {
   migrationsDir: process.env.MIGRATIONS_DIR || path.resolve(root, '..', 'Database', 'migrations'),
   seedOnRegister: (process.env.SEED_ON_REGISTER ?? 'true') === 'true',
   ocrMode: process.env.OCR_MODE || 'mock',
-  ocrUrl: process.env.OCR_SERVICE_URL || 'https://openrouter.ai/api/v1/chat/completions',
-  aiApiKey: process.env.OPENROUTER_API_KEY || '',
-  aiModel: process.env.OPENROUTER_MODEL || 'qwen/qwen2.5-vl-72b-instruct:free',
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiModels: String(process.env.GEMINI_MODEL || 'gemini-3.6-flash')
+    .split(',').map((model) => model.trim()).filter(Boolean),
   maxUploadMb: Number(process.env.MAX_UPLOAD_MB) || 8,
 }
 

@@ -7,7 +7,12 @@
 //   - anggaran dikenali lewat nama kategori (tidak ada id angka); `alertAt` Backend = `threshold` Frontend
 //   - laporan: Backend mengirim `labels`/`values`; Frontend memakai `series: [{label, amount}]`
 
-export const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+// Di development, ikuti host yang dipakai browser supaya HP di Wi-Fi yang sama
+// otomatis memanggil Backend di IP laptop, bukan localhost milik HP.
+const fallbackApi = typeof window === 'undefined'
+  ? 'http://localhost:4000'
+  : `${window.location.protocol}//${window.location.hostname || 'localhost'}:4000`;
+export const API_URL = (import.meta.env.VITE_API_URL || fallbackApi).replace(/\/$/, '');
 
 let getToken = () => null;
 let onUnauthorized = () => {};
