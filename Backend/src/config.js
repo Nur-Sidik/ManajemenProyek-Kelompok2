@@ -47,16 +47,21 @@ export const config = {
     (process.env.SEED_ON_REGISTER ?? 'true') === 'true',
 
   // OCR Gemini
+  // OCR Gemini
   ocrMode: process.env.OCR_MODE || 'mock',
 
   ocrUrl:
     process.env.OCR_SERVICE_URL ||
     'https://generativelanguage.googleapis.com/v1beta/models',
 
-  aiApiKey: process.env.GEMINI_API_KEY || '',
+  // dipakai versi Frontend
+  geminiApiKey: process.env.GEMINI_API_KEY || '',
+  geminiModels: String(process.env.GEMINI_MODEL || 'gemini-3.6-flash')
+    .split(',').map((model) => model.trim()).filter(Boolean),
 
-  aiModel:
-    process.env.GEMINI_MODEL || 'gemini-3.5-flash',
+  // dipakai versi main
+  aiApiKey: process.env.GEMINI_API_KEY || '',
+  aiModel: process.env.GEMINI_MODEL || 'gemini-3.5-flash',
 
   maxUploadMb: Number(process.env.MAX_UPLOAD_MB) || 8,
 }

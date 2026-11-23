@@ -1,7 +1,7 @@
-import express from 'express'
 import cors from 'cors'
-import helmet from 'helmet'
+import express from 'express'
 import rateLimit from 'express-rate-limit'
+import helmet from 'helmet'
 import { config } from './config.js'
 import { getDb } from './db/index.js'
 import { errorHandler, notFound } from './http.js'
@@ -14,7 +14,7 @@ export function createApp() {
   const app = express()
   app.disable('x-powered-by')
   app.use(helmet())
-  app.use(cors({ origin: config.corsOrigins }))
+  app.use(cors({ origin: config.isProd ? config.corsOrigins : true }))
   app.use(express.json({ limit: '100kb' }))
 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))

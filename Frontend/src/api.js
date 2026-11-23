@@ -1,12 +1,17 @@
-
 import { fmtDate } from './format.js';
 
 // ==========================================
 // KONFIGURASI API
 // ==========================================
 
+// Di development, ikuti host yang dipakai browser supaya HP di Wi-Fi yang sama
+// otomatis memanggil Backend di IP laptop, bukan localhost milik HP.
+const fallbackApi = typeof window === 'undefined'
+  ? 'http://localhost:4000'
+  : `${window.location.protocol}//${window.location.hostname || 'localhost'}:4000`;
+
 export const API_URL = (
-  import.meta.env.VITE_API_URL || 'http://localhost:4000'
+  import.meta.env.VITE_API_URL || fallbackApi
 ).replace(/\/+$/, '');
 
 let getToken = () => null;
@@ -288,7 +293,6 @@ const normReport = (r = {}) => {
 
 // ==========================================
 // SCAN RECEIPT NORMALIZER
-// PERBAIKAN UTAMA OCR GEMINI
 // ==========================================
 
 const normScan = (r = {}) => {

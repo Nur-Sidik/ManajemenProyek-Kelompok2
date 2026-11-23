@@ -84,6 +84,7 @@ export default function Auth() {
     <div className="auth">
       <Brand />
       <section className="auth-right">
+        <div className="auth-mobile-brand"><Logo /></div>
         <form className="auth-form" onSubmit={submit} noValidate>
           <h1>{isLogin ? 'Selamat datang kembali' : 'Mulai perjalananmu'}</h1>
           <p>{isLogin ? 'Masuk untuk melanjutkan mengelola keuanganmu.' : 'Buat akun dan kelola uang dengan lebih terarah.'}</p>

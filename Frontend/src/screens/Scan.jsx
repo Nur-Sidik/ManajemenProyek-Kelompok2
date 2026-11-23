@@ -56,7 +56,7 @@ function SavedView({ saved, onAgain, againLabel }) {
             <span className="icon-bang">!</span><strong style={{ fontSize: 12.5 }}>{saved.warning}</strong>
           </div>
         )}
-        <div className="btns" style={{ gridTemplateColumns: '1.3fr 1fr', marginTop: 4 }}>
+        <div className="btns btns-saved">
           <Button onClick={() => nav('home')}>Kembali ke Dashboard</Button>
           <Button variant="outline" onClick={onAgain}>{againLabel}</Button>
         </div>
@@ -156,7 +156,7 @@ export function ScanScreen() {
     return (
       <>
         <PageHead title="Konfirmasi Transaksi" subtitle="Periksa hasil pembacaan AI sebelum menyimpan transaksi."><Stepper current={1} /></PageHead>
-        <div className="grid" style={{ gridTemplateColumns: '1fr 1.55fr', alignItems: 'start' }}>
+        <div className="grid g-scan-confirm">
           <div className="receipt-view">
             <span className="tag">STRUK ASLI</span>
             <img src={preview} alt="Foto struk" />
@@ -190,7 +190,7 @@ export function ScanScreen() {
     <>
       <PageHead title="Scan Struk" subtitle="Foto struk, biarkan AI membantu mencatat pengeluaranmu."><Stepper current={0} /></PageHead>
       {fileInputs}
-      <div className="grid g-2-1" style={{ gridTemplateColumns: '1.9fr 1fr', alignItems: 'start' }}>
+      <div className="grid g-scan-upload">
         <div className="card">
           <div
             className={`dropzone ${drag ? 'drag' : ''}`}
@@ -206,8 +206,8 @@ export function ScanScreen() {
             ) : (
               <div>
                 <div className="dz-icon"><Icon name="upload" size={28} /></div>
-                <h3>Tarik &amp; lepas foto struk di sini</h3>
-                <p>atau gunakan tombol di bawah untuk memilih file</p>
+                <h3>Foto struk di sini</h3>
+                <p>Gunakan kamera atau pilih foto dari galeri.</p>
               </div>
             )}
           </div>

@@ -1,4 +1,3 @@
-
 import sharp from 'sharp'
 import { CATEGORIES, config } from '../config.js'
 import { HttpError } from '../http.js'
@@ -179,7 +178,7 @@ ATURAN PENTING:
 
   const candidates = [
     ...new Set([
-      config.aiModel,
+      ...config.geminiModels,
       ...FALLBACK_MODELS,
     ].filter(Boolean)),
   ]
@@ -187,7 +186,7 @@ ATURAN PENTING:
   let parsed = null
   let lastError = ''
 
-  // 7. Gọi API Gemini
+  // 7. Panggil API Gemini
   for (const modelName of candidates) {
 
     let modelSucceeded = false
@@ -196,7 +195,7 @@ ATURAN PENTING:
 
       try {
         console.log(
-          `OCR: thử model ${modelName}, lần ${attempt}/2`
+          `OCR: coba model ${modelName}, percobaan ${attempt}/2`
         )
 
         const endpoint =

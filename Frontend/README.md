@@ -1,19 +1,26 @@
 # SaveSmart AI — Frontend (React + Vite)
 
-Aplikasi web desktop dengan sidebar kiri, palet hijau zamrud, dan 20 alur layar sesuai desain.
+Aplikasi web dengan sidebar kiri di desktop dan menu drawer di HP, palet hijau zamrud, dan 20 alur layar sesuai desain.
 
 ## Menjalankan
 ```bash
 cd Frontend
 npm install
-cp .env.example .env     # opsional, default http://localhost:4000
+cp .env.example .env     # opsional, default mengikuti host browser
 npm run dev              # http://localhost:5173
 ```
 Belum punya Backend? Jalankan mock API (tanpa dependensi) di terminal lain:
 ```bash
 npm run mock             # http://localhost:4000  — akun demo: demo@savesmart.ai / password123
 ```
-Backend perlu mengaktifkan **CORS** untuk origin `http://localhost:5173`.
+Saat development Backend mengizinkan origin LAN secara otomatis. Untuk production, isi **CORS** (`CORS_ORIGINS`) dengan domain frontend.
+
+## Buka di HP (satu Wi-Fi)
+1. Jalankan MySQL dan Backend (`cd Backend && npm run dev`).
+2. Jalankan frontend (`cd Frontend && npm run dev`). Vite menampilkan alamat **Network**, mis. `http://192.168.1.10:5173`.
+3. Buka alamat Network itu di browser HP. Alamat API otomatis mengikuti IP yang sama, jadi tidak perlu mengubah `.env`.
+4. Jika tidak bisa dibuka: pastikan HP dan laptop satu Wi-Fi, buka firewall port **5173** dan **4000**, atau gunakan hotspot HP lalu sambungkan laptop ke hotspot tersebut.
+5. Untuk production, tetap set `VITE_API_URL=https://domain-backend` saat build dan isi `CORS_ORIGINS` di Backend.
 
 ## Struktur
 | File | Isi |

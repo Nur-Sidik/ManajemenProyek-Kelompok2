@@ -62,26 +62,18 @@ Perintah lain: `npm run db:migrate` (hanya migrasi) dan `npm run db:seed -- emai
 Kategori pengeluaran: `Makanan`, `Transport`, `Hiburan`, `Belanja`, `Tagihan`, `Kesehatan`, `Pendidikan`, `Lainnya`.
 Kategori pemasukan: `Uang Saku`, `Gaji`, `Bonus`, `Hadiah`, `Lainnya` (kalau kosong otomatis `Pemasukan`).
 
-## Menyambungkan layanan OCR (untuk AI Developer)
+## OCR struk dengan Gemini
 
-Saat ini `OCR_MODE=mock` mengembalikan hasil contoh. Untuk memakai layanan di `ocr/ai-service`, atur
-`OCR_MODE=service` dan `OCR_SERVICE_URL`. Backend akan mengirim `POST multipart/form-data` dengan field `file` (foto struk).
-Layanan harus membalas JSON:
+`OCR_MODE=mock` mengembalikan hasil contoh. Untuk memakai Gemini, atur variabel berikut di `.env` backend:
 
-```json
-{
-  "store": "Indomaret Kaliurang",
-  "date": "2026-11-22",
-  "category": "Makanan",
-  "accuracy": 96,
-  "items": [{ "name": "Susu UHT 1L", "price": 18000 }],
-  "total": 52000
-}
+```env
+OCR_MODE=service
+GEMINI_API_KEY=isi_api_key_gemini
+GEMINI_MODEL=gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash,gemini-2.5-flash
+MAX_UPLOAD_MB=8
 ```
 
-Hanya `store` yang wajib. `total` boleh dikosongkan (dijumlah dari `items`), `category` bernilai salah satu dari empat kategori
-(default `Lainnya`). Balas status **422** kalau struk tidak terbaca; backend meneruskannya sebagai `UNREADABLE`
-sehingga frontend menampilkan layar "Struk Tidak Terbaca". Status lain yang bukan 2xx dianggap layanan tidak tersedia (502).
+`GEMINI_MODEL` menerima daftar model dipisahkan koma dan dicoba berurutan. Jika model kena rate limit, kapasitas penuh, atau ID model tidak tersedia, backend mencoba model berikutnya. Gunakan ID model Gemini yang valid. Backend mengirim gambar struk yang sudah diperkecil langsung ke Gemini API. API key hanya dibaca dari environment backend dan tidak dikirim ke frontend. Model mengembalikan nama merchant, nominal, kategori, dan tanggal dalam JSON.
 
 ## Sebelum production
 

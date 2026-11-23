@@ -79,7 +79,7 @@ export function HomeScreen() {
                 </div>
               )}
 
-              <div className="grid" style={{ gridTemplateColumns: '1.75fr 1fr' }}>
+              <div className="grid g-home-lower">
                 <div className="card">
                   <div className="row between">
                     <h2>Transaksi Terbaru</h2>
@@ -157,6 +157,7 @@ function BarChart({ series }) {
   const step = niceStep(max / 3);
   const top = step * 3;
   const peak = series.findIndex((s) => s.amount === max && max > 0);
+  const labelEvery = Math.max(1, Math.ceil(series.length / 8));
   return (
     <div className="chart" role="img" aria-label="Grafik pengeluaran">
       <div className="chart-y">{[0, 1, 2, 3].map((i) => <span key={i}>{i === 0 ? '0' : compact(step * i)}</span>)}</div>
@@ -165,7 +166,7 @@ function BarChart({ series }) {
         {series.map((s, i) => (
           <div className="bar-col" key={i} title={`${s.label}: ${rupiah(s.amount)}`}>
             <div className={`bar ${i === peak ? 'top' : ''}`} style={{ height: `${top ? (s.amount / top) * 100 : 0}%` }} />
-            <label>{s.label}</label>
+            {i % labelEvery === 0 && <label>{s.label}</label>}
           </div>
         ))}
       </div>
