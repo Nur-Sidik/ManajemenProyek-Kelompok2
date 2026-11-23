@@ -26,6 +26,8 @@ const ICONS = {
   camera: 'M4 8h3l2-3h6l2 3h3v12H4zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
   download: 'M12 4v12M7 11l5 5 5-5M4 20h16',
   spark: 'M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z',
+  menu: 'M4 6h16M4 12h16M4 18h16',
+  close: 'M6 6l12 12M18 6L6 18',
 };
 export function Icon({ name, size = 18, stroke = 1.8 }) {
   return (
@@ -199,36 +201,75 @@ const NAV_MAIN = [
 
 export function Layout({ active, crumb, children }) {
   const { user, nav, unread, month, askLogout } = useStore();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const go = (route) => { setDrawerOpen(false); nav(route); };
+  const logout = () => { setDrawerOpen(false); askLogout(); };
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e) => e.key === 'Escape' && setDrawerOpen(false);
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [drawerOpen]);
+
+  // Tutup drawer bila layar melebar ke ukuran desktop supaya halaman tidak terkunci.
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 901px)');
+    const onChange = (e) => e.matches && setDrawerOpen(false);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
   const item = (it, extra) => (
-    <button key={it.key} className={`nav-item ${active === it.key ? 'on' : ''}`} onClick={() => nav(it.route)}
+    <button key={it.key} className={`nav-item ${active === it.key ? 'on' : ''}`} onClick={() => go(it.route)}
       aria-current={active === it.key ? 'page' : undefined}>
       <Icon name={it.icon} size={19} />
       <span>{it.label}</span>
       {extra}
     </button>
   );
+  const navItems = (
+    <>
+      <Logo />
+      <div className="nav-caption">KEUANGAN PRIBADI</div>
+      <nav className="nav">
+        {NAV_MAIN.map((it) => item(it))}
+        <div className="nav-sep" />
+        {item({ key: 'report', label: 'Laporan', icon: 'chart', route: 'report' })}
+        {item({ key: 'notifications', label: 'Notifikasi', icon: 'bell', route: 'notifications' },
+          unread > 0 && <span className="nav-count">{unread}</span>)}
+      </nav>
+      <div className="side-tip">
+        <strong>Sedikit demi sedikit, jadi kebiasaan baik.</strong>
+        <span>Mulai dari satu transaksi hari ini.</span>
+      </div>
+      <button className="nav-item logout" onClick={logout}><Icon name="logout" size={19} /><span>Keluar</span></button>
+    </>
+  );
   return (
     <div className="app">
-      <aside className="sidebar">
-        <Logo />
-        <div className="nav-caption">KEUANGAN PRIBADI</div>
-        <nav className="nav">
-          {NAV_MAIN.map((it) => item(it))}
-          <div className="nav-sep" />
-          {item({ key: 'report', label: 'Laporan', icon: 'chart', route: 'report' })}
-          {item({ key: 'notifications', label: 'Notifikasi', icon: 'bell', route: 'notifications' },
-            unread > 0 && <span className="nav-count">{unread}</span>)}
-        </nav>
-        <div className="side-tip">
-          <strong>Sedikit demi sedikit, jadi kebiasaan baik.</strong>
-          <span>Mulai dari satu transaksi hari ini.</span>
-        </div>
-        <button className="nav-item logout" onClick={askLogout}><Icon name="logout" size={19} /><span>Keluar</span></button>
+      <aside className="sidebar">{navItems}</aside>
+
+      <div className={`drawer-backdrop ${drawerOpen ? 'open' : ''}`} onClick={() => setDrawerOpen(false)} aria-hidden="true" />
+      <aside id="mobile-menu" className={`drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen} aria-label="Menu navigasi">
+        <button className="drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Tutup menu"><Icon name="close" size={20} /></button>
+        {navItems}
       </aside>
 
       <div className="main">
         <header className="topbar">
-          <div className="crumb">Ruang keuangan / {crumb}</div>
+          <div className="topbar-left">
+            <button className="hamburger" onClick={() => setDrawerOpen(true)} aria-label="Buka menu"
+              aria-expanded={drawerOpen} aria-controls="mobile-menu">
+              <Icon name="menu" size={22} />
+            </button>
+            <div className="mobile-brand"><Logo /></div>
+            <div className="crumb">Ruang keuangan / {crumb}</div>
+          </div>
           <div className="top-right">
             <span className="top-month">{monthKeyLabel(month)}</span>
             <button className="bell" onClick={() => nav('notifications')} aria-label="Notifikasi">

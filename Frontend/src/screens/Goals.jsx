@@ -72,7 +72,7 @@ export function GoalsScreen() {
               )}
 
               {!showInactive && featured && (
-                <div className="grid" style={{ gridTemplateColumns: '1.7fr 1fr' }}>
+                <div className="grid g-goal-featured">
                   <div className="card plan-card">
                     <Badge>RENCANA {featured.name.toUpperCase()}</Badge>
                     {fp.months ? (
@@ -123,7 +123,7 @@ export function GoalDetailScreen({ id }) {
             </PageHead>
 
             <div className="stack">
-              <div className="grid" style={{ gridTemplateColumns: '2.25fr 1fr' }}>
+              <div className="grid g-goal-detail">
                 <div className="card dark goal-card">
                   <div className="head"><span className="eyebrow">Terkumpul</span><Badge tone="dark">{g.active ? 'Aktif' : 'Nonaktif'}</Badge></div>
                   <div className="amount" style={{ fontSize: 32 }}>{rupiah(g.saved)}</div>
